@@ -11,11 +11,11 @@ Gene fusions play a major role in tumorigenesis, so it is crucial that Treehouse
 
 ##### Image located on hub.docker.com
 
-REPOSITORY: jpfeil/star-fusion
+REPOSITORY: ucsctreehouse/fusion
 
 TAG: 0.1.0
 
-IMAGE ID: bb0c8be35574
+IMAGE ID: 5eeb0e139cd6
 
 
 ##### Input files
@@ -23,11 +23,6 @@ IMAGE ID: bb0c8be35574
 The pipeline requires paired-end fastq files, the output directory, and the genome library directory. The genelist is already baked into the docker container, but there is an option to include a different genelist. Please refer to the STAR-Fusion documentation for creating a genome library. You can also find a prebuilt genome library here: `http://ceph-gw-01.pod/references/STARFusion-GRCh38gencode23.tar.gz` 
 
 ```
-usage: star_fusion_pipeline.py [-h] --left_fq R1 --right_fq R2 --output_dir
-                               OUTPUT_DIR --genome_lib_dir GENOME_LIB_DIR
-                               [--CPU CPU] [--genelist GENELIST]
-                               [--skip-filter] [-F] [--clean] [--test]
-
 Wraps STAR-Fusion program and filters output using FusionInspector.
 
 optional arguments:
@@ -47,20 +42,22 @@ optional arguments:
   --test
 ```
 
+
 ##### Run command
 ```
-docker run -it --rm -v `pwd`:/data jpfeil/star-fusion:0.1.0 \
+docker run -it --rm -v `pwd`:/data ucsctreehouse/fusion:0.1.0 \
                                    --left_fq 1.fq.gz \
                                    --right_fq 2.fq.gz \
                                    --output_dir fusion_output \
                                    --CPU `nproc` \
                                    --genome_lib_dir STARFusion-GRCh38gencode23
                                    --run_fusion_inspector
+                                   --clean
 ```
 
 ### **Output**
 
-There will be many files in the output directory, but you can find the fusion calls here:
+There will be many files in the output directory, but you can find the fusion calls in the fusion-output directory:
 
 - `star-fusion.fusion_candidates.final.abridged.FFPM`
 - `star-fusion.fusion_candidates.final.in_genelist.abridged.FFPM`

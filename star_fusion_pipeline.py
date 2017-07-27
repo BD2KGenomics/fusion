@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 
+
 def pipeline(args):
     """
     STAR-Fusion and FusionInspector pipeline
@@ -92,23 +93,24 @@ def pipeline(args):
                '--out_prefix', 'FusionInspector',
                '--prep_for_IGV',
                '--include_Trinity',
-               '--CPU', args.CPU,
-               '--cleanup']
+               '--CPU', args.CPU]
 
         print('Beginning FusionInspector Run', file=sys.stderr)
         subprocess.check_call(cmd)
 
-    os.mkdir('fusion')
+    final_dir = os.path.join('/data', args.output_dir, 'fusion-output')
+    if not os.path.exists(final_dir):
+        os.mkdir(final_dir)
+
     with open('/home/save-list') as f:
         for line in f:
             line = line.strip()
 
-            # Check that output file exists
-            if not os.path.exists(line):
-                raise ValueError('Expected file %s not found' % line)
+            path = os.path.join('/data', args.output_dir, line)
 
-            else:
-                shutil.move(line, os.path.join('fusion', os.path.basename(line)))
+            # Check that output file exists
+            if os.path.exists(path):
+                shutil.copyfile(path, os.path.join(final_dir, os.path.basename(line)))
 
 
 def main():
@@ -116,13 +118,13 @@ def main():
     Wraps STAR-Fusion program and filters output using FusionInspector.
     """
     parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument('--left_fq', 
-                        dest='r1', 
-                        required=True, 
+    parser.add_argument('--left_fq',
+                        dest='r1',
+                        required=True,
                         help='Fastq 1')
-    parser.add_argument('--right_fq', 
-                        dest='r2', 
-                        required=True, 
+    parser.add_argument('--right_fq',
+                        dest='r2',
+                        required=True,
                         help='Fastq 2')
     parser.add_argument('--output_dir',
                         required=True,
@@ -181,88 +183,6 @@ def main():
             # https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
             for d in delete:
                 # Need to add a relative path within docker
-                d = os.path.join(args.output_dir, d)
-
-                # Skip files or directories that do not exist
-                if not os.path.exists(d):
-                    continue
-
-                try:
-                    os.remove(d)
-
-                except OSError:
-                    shutil.rmtree(d)
-
-def main():
-    """
-    Wraps STAR-Fusion program and filters output using FusionInspector.
-    """
-    parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument('--left_fq', 
-                        dest='r1', 
-                        required=True, 
-                        help='Fastq 1')
-    parser.add_argument('--right_fq', 
-                        dest='r2', 
-                        required=True, 
-                        help='Fastq 2')
-    parser.add_argument('--output_dir',
-                        required=True,
-                        help='Output directory')
-    parser.add_argument('--genome_lib_dir',
-                        required=True,
-                        help='Genome library directory')
-    parser.add_argument('--CPU',
-                        default='1',
-                        help='Number of cores')
-    parser.add_argument('--genelist',
-                        default='/home/genelist.txt')
-    parser.add_argument('--skip-filter',
-                        action='store_true')
-    parser.add_argument('-F',
-                        '--run_fusion_inspector',
-                        action='store_true',
-                        help='Runs FusionInspector on output')
-    parser.add_argument('--clean',
-                        action='store_true',
-                        default=False,
-                        help='Cleans directory of intermediate files.')
-    parser.add_argument('--test',
-                        action='store_true',
-                        default=False)
-    args = parser.parse_args()
-
-    # Check if output directory already exists. The final permissions are set
-    # to the permissions of the output directory.
-    if not os.path.exists(args.output_dir):
-        raise ValueError('Output directory does not exist!')
-
-    # This is based on the Toil RNA-seq pipeline:
-    # https://github.com/BD2KGenomics/toil-rnaseq/blob/master/docker/wrapper.py#L51
-    try:
-        print("Starting STAR-Fusion Pipeline", file=sys.stderr)
-        pipeline(args)
-
-    except subprocess.CalledProcessError as e:
-        print(e.message, file=sys.stderr)
-        exit(e.returncode)
-
-    finally:
-        print('Changing file ownership to user.', file=sys.stderr)
-        stat = os.stat(args.output_dir)
-        subprocess.check_call(['chown', '-R', '{}:{}'.format(stat.st_uid, stat.st_gid), args.output_dir])
-
-        if args.clean:
-            print('Cleaning output directory.', file=sys.stderr)
-
-            delete = set()
-            with open('/home/delete-list') as f:
-                for line in f:
-                    delete.add( line.strip() )
-
-            # https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
-            for d in delete:
-                # Need to add a relative path within the docker instance
                 d = os.path.join(args.output_dir, d)
 
                 # Skip files or directories that do not exist
